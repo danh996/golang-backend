@@ -7,8 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/danh996/go-school/data"
-
+	"github.com/danh996/go-school/data/models"
 	_ "github.com/jackc/pgconn"
 	_ "github.com/jackc/pgx/v4"
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -21,11 +20,11 @@ var counts int64
 
 type Config struct {
 	DB     *sql.DB
-	Models data.Models
+	Models models.Models
 }
 
 func main() {
-	log.Println("Starting authentication service")
+	log.Println("Starting School management app")
 
 	// connect to DB
 	conn := connectToDB()
@@ -36,7 +35,7 @@ func main() {
 	// set up config
 	app := Config{
 		DB:     conn,
-		Models: data.New(conn),
+		Models: models.New(conn),
 	}
 
 	srv := &http.Server{
@@ -46,7 +45,7 @@ func main() {
 
 	err := srv.ListenAndServe()
 	if err != nil {
-		log.Panic(err)
+		log.Panic("Have some error in App", err)
 	}
 }
 
