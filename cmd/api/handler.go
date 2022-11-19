@@ -4,8 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/danh996/go-school/data/models"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 func (app *Config) GetListSchools(w http.ResponseWriter, r *http.Request) {
@@ -120,7 +123,7 @@ func (app *Config) DeleteSchool(w http.ResponseWriter, r *http.Request) {
 	app.writeJSON(w, http.StatusAccepted, payload)
 }
 
-func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
+func (app *Config) Login(w http.ResponseWriter, r *http.Request) {
 	var requestPayload struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -135,7 +138,7 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 	// validate the user against the database
 	user, err := app.Models.User.GetByEmail(requestPayload.Email)
 	if err != nil {
-		app.errorJSON(w, errors.New("invalid credentials"), http.StatusBadRequest)
+		app.errorJSON(w, errors.New(fmt.Sprintf("Can not find user with provided email %s", err)), http.StatusBadRequest)
 		return
 	}
 
@@ -145,13 +148,33 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	generatedToken := GenerateToken(strconv.FormatUint((uint64(user.ID)), 10))
+	fmt.Println("1111111111111111111111111", generatedToken)
+
 	payload := jsonResponse{
 		Error:   false,
 		Message: fmt.Sprintf("Logged in user %s", user.Email),
-		Data:    user,
+		Data:    generatedToken,
 	}
 
 	app.writeJSON(w, http.StatusAccepted, payload)
+}
+
+func GenerateToken(UserID string) string {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"foo": "bar",
+		"nbf": time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
+	})
+
+	// Sign and get the complete encoded token as a string using the secret
+	var sampleSecretKey = []byte("UserID")
+
+	tokenString, err := token.SignedString(sampleSecretKey)
+
+	if err != nil {
+		panic(err)
+	}
+	return tokenString
 }
 
 func (app *Config) CreateUser(w http.ResponseWriter, r *http.Request) {

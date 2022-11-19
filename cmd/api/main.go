@@ -40,7 +40,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", webPort),
-		Handler: app.routes(),
+		Handler: myMiddleware(app.routes()),
 	}
 
 	err := srv.ListenAndServe()
@@ -84,4 +84,12 @@ func connectToDB() *sql.DB {
 		time.Sleep(2 * time.Second)
 		continue
 	}
+}
+
+func myMiddleware(originalHandler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Running before handler")
+		originalHandler.ServeHTTP(w, r)
+		fmt.Println("Running after handler")
+	})
 }
