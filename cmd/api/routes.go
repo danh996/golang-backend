@@ -27,5 +27,8 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/school", app.InsertSchool)
 	mux.Put("/school", app.UpdateSchool)
 	mux.Delete("/school", app.DeleteSchool)
+
+	mux.Post("/user", app.CreateUser)
+
 	return mux
 }

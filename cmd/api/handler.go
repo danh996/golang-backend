@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -122,28 +120,74 @@ func (app *Config) DeleteSchool(w http.ResponseWriter, r *http.Request) {
 	app.writeJSON(w, http.StatusAccepted, payload)
 }
 
-func (app *Config) logRequest(name, data string) error {
-	var entry struct {
-		Name string `json:"name"`
-		Data string `json:"data"`
+func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
+	var requestPayload struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
-	entry.Name = name
-	entry.Data = data
-
-	jsonData, _ := json.MarshalIndent(entry, "", "\t")
-	logServiceURL := "http://logger-service/log"
-
-	request, err := http.NewRequest("POST", logServiceURL, bytes.NewBuffer(jsonData))
+	err := app.readJSON(w, r, &requestPayload)
 	if err != nil {
-		return err
+		app.errorJSON(w, err, http.StatusBadRequest)
+		return
 	}
 
-	client := &http.Client{}
-	_, err = client.Do(request)
+	// validate the user against the database
+	user, err := app.Models.User.GetByEmail(requestPayload.Email)
 	if err != nil {
-		return err
+		app.errorJSON(w, errors.New("invalid credentials"), http.StatusBadRequest)
+		return
 	}
 
-	return nil
+	valid, err := user.PasswordMatches(requestPayload.Password)
+	if err != nil || !valid {
+		app.errorJSON(w, errors.New("invalid credentials"), http.StatusBadRequest)
+		return
+	}
+
+	payload := jsonResponse{
+		Error:   false,
+		Message: fmt.Sprintf("Logged in user %s", user.Email),
+		Data:    user,
+	}
+
+	app.writeJSON(w, http.StatusAccepted, payload)
+}
+
+func (app *Config) CreateUser(w http.ResponseWriter, r *http.Request) {
+
+	var requestPayload struct {
+		Name     string `json:"name"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+		Active   int    `json:"active,omitempty"`
+	}
+
+	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		app.errorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	// validate the user against the database
+	insertUser := models.User{
+		Name:     requestPayload.Name,
+		Password: requestPayload.Password,
+		Email:    requestPayload.Email,
+		Active:   requestPayload.Active,
+	}
+
+	schoolId, err := app.Models.User.Insert(insertUser)
+	if err != nil {
+		app.errorJSON(w, errors.New(fmt.Sprintf("Error when insert user %s", err)), http.StatusBadRequest)
+		return
+	}
+
+	payload := jsonResponse{
+		Error:   false,
+		Message: fmt.Sprintf("Insert user success"),
+		Data:    schoolId,
+	}
+
+	app.writeJSON(w, http.StatusAccepted, payload)
 }

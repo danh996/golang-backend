@@ -9,24 +9,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const dbTimeout = time.Second * 3
-
-// New is the function used to create an instance of the data package. It returns the type
-// Model, which embeds all the types we want to be available to our application.
-
-// Models is the type for this package. Note that any model that is included as a member
-// in this type is available to us throughout the application, anywhere that the
-// app variable is used, provided that the model is also added in the New function.
-type Models struct {
-	User User
-}
-
 // User is the structure which holds one user from the database.
 type User struct {
 	ID        int       `json:"id"`
 	Email     string    `json:"email"`
-	FirstName string    `json:"first_name,omitempty"`
-	LastName  string    `json:"last_name,omitempty"`
+	Name      string    `json:"name,omitempty"`
 	Password  string    `json:"-"`
 	Active    int       `json:"active"`
 	CreatedAt time.Time `json:"created_at"`
@@ -38,7 +25,7 @@ func (u *User) GetAll() ([]*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `select id, email, first_name, last_name, password, user_active, created_at, updated_at
+	query := `select id, email, name, password, user_active, created_at, updated_at
 	from users order by last_name`
 
 	rows, err := db.QueryContext(ctx, query)
@@ -54,8 +41,7 @@ func (u *User) GetAll() ([]*User, error) {
 		err := rows.Scan(
 			&user.ID,
 			&user.Email,
-			&user.FirstName,
-			&user.LastName,
+			&user.Name,
 			&user.Password,
 			&user.Active,
 			&user.CreatedAt,
@@ -77,7 +63,7 @@ func (u *User) GetByEmail(email string) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `select id, email, first_name, last_name, password, user_active, created_at, updated_at from users where email = $1`
+	query := `select id, email, name, password, user_active, created_at, updated_at from users where email = $1`
 
 	var user User
 	row := db.QueryRowContext(ctx, query, email)
@@ -85,8 +71,7 @@ func (u *User) GetByEmail(email string) (*User, error) {
 	err := row.Scan(
 		&user.ID,
 		&user.Email,
-		&user.FirstName,
-		&user.LastName,
+		&user.Name,
 		&user.Password,
 		&user.Active,
 		&user.CreatedAt,
@@ -105,7 +90,7 @@ func (u *User) GetOne(id int) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `select id, email, first_name, last_name, password, user_active, created_at, updated_at from users where id = $1`
+	query := `select id, email, name, password, user_active, created_at, updated_at from users where id = $1`
 
 	var user User
 	row := db.QueryRowContext(ctx, query, id)
@@ -113,8 +98,7 @@ func (u *User) GetOne(id int) (*User, error) {
 	err := row.Scan(
 		&user.ID,
 		&user.Email,
-		&user.FirstName,
-		&user.LastName,
+		&user.Name,
 		&user.Password,
 		&user.Active,
 		&user.CreatedAt,
@@ -136,8 +120,7 @@ func (u *User) Update() error {
 
 	stmt := `update users set
 		email = $1,
-		first_name = $2,
-		last_name = $3,
+		namest_name = $3,
 		user_active = $4,
 		updated_at = $5
 		where id = $6
@@ -145,8 +128,7 @@ func (u *User) Update() error {
 
 	_, err := db.ExecContext(ctx, stmt,
 		u.Email,
-		u.FirstName,
-		u.LastName,
+		u.Name,
 		u.Active,
 		time.Now(),
 		u.ID,
@@ -200,13 +182,12 @@ func (u *User) Insert(user User) (int, error) {
 	}
 
 	var newID int
-	stmt := `insert into users (email, first_name, last_name, password, user_active, created_at, updated_at)
-		values ($1, $2, $3, $4, $5, $6, $7) returning id`
+	stmt := `insert into users (email, name, password, user_active, created_at, updated_at)
+		values ($1, $2, $3, $4, $5, $6) returning id`
 
 	err = db.QueryRowContext(ctx, stmt,
 		user.Email,
-		user.FirstName,
-		user.LastName,
+		user.Name,
 		hashedPassword,
 		user.Active,
 		time.Now(),
@@ -243,7 +224,6 @@ func (u *User) ResetPassword(password string) error {
 // with the hash we have stored for a given user in the database. If the password
 // and hash match, we return true; otherwise, we return false.
 func (u *User) PasswordMatches(plainText string) (bool, error) {
-	return true, nil
 	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(plainText))
 	if err != nil {
 		switch {

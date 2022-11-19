@@ -11,9 +11,11 @@ func New(dbPool *sql.DB) Models {
 
 	return Models{
 		School: School{},
+		User:   User{},
 	}
 }
 
 type Models struct {
 	School School
+	User   User
 }
