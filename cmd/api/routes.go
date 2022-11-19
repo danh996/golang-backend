@@ -24,5 +24,8 @@ func (app *Config) routes() http.Handler {
 	mux.Use(middleware.Heartbeat("/ping"))
 
 	mux.Get("/schools", app.GetListSchools)
+	mux.Post("/school", app.InsertSchool)
+	mux.Put("/school", app.UpdateSchool)
+	mux.Delete("/school", app.DeleteSchool)
 	return mux
 }

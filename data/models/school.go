@@ -130,3 +130,17 @@ func (s *School) Delete() error {
 
 	return nil
 }
+
+func (s *School) DeleteByID(id int) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	stmt := `delete from schools where id = $1`
+
+	_, err := db.ExecContext(ctx, stmt, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
