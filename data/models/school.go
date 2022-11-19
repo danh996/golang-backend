@@ -16,7 +16,7 @@ type School struct {
 }
 
 // GetAll returns a slice of all users, sorted by last name
-func (u *School) GetAll() ([]*School, error) {
+func (s *School) GetAll() ([]*School, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
@@ -47,4 +47,86 @@ func (u *School) GetAll() ([]*School, error) {
 	}
 
 	return schools, nil
+}
+
+func (s *School) GetOne(id int) (*School, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	query := `select * from schools where id = $1`
+
+	var school School
+	row := db.QueryRowContext(ctx, query, id)
+
+	err := row.Scan(
+		&school.ID,
+		&school.Name,
+		&school.CreatedAt,
+		&school.UpdatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &school, nil
+}
+
+// Insert inserts a new user into the database, and returns the ID of the newly inserted row
+func (s *School) Insert(school School) (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	var newID int
+	stmt := `insert into schools (name, created_at, updated_at)
+		values ($1, $2, $3) returning id`
+
+	err := db.QueryRowContext(ctx, stmt,
+		school.Name,
+		time.Now(),
+		time.Now(),
+	).Scan(&newID)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return newID, nil
+}
+
+func (s *School) Update() error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	stmt := `update schools set
+		name = $1,
+		updated_at = $2
+		where id = $3
+	`
+
+	_, err := db.ExecContext(ctx, stmt,
+		s.Name,
+		time.Now(),
+		s.ID,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *School) Delete() error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	stmt := `delete from schools where id = $1`
+
+	_, err := db.ExecContext(ctx, stmt, s.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
