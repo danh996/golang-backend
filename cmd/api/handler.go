@@ -4,11 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/danh996/go-school/data/models"
-	"github.com/golang-jwt/jwt/v4"
 )
 
 func (app *Config) GetListSchools(w http.ResponseWriter, r *http.Request) {
@@ -16,7 +14,7 @@ func (app *Config) GetListSchools(w http.ResponseWriter, r *http.Request) {
 	// validate the user against the database
 	schools, err := app.Models.School.GetAll()
 	if err != nil {
-		app.errorJSON(w, errors.New("invalid credentials"), http.StatusBadRequest)
+		app.errorJSON(w, errors.New(fmt.Sprintf("Get list school error %s", err)), http.StatusBadRequest)
 		return
 	}
 
@@ -135,6 +133,11 @@ func (app *Config) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if requestPayload.Email == "" || requestPayload.Password == "" {
+		http.Error(w, "Missing username or password.", http.StatusBadRequest)
+		return
+	}
+
 	// validate the user against the database
 	user, err := app.Models.User.GetByEmail(requestPayload.Email)
 	if err != nil {
@@ -148,32 +151,29 @@ func (app *Config) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	generatedToken := GenerateToken(strconv.FormatUint((uint64(user.ID)), 10))
-	fmt.Println("1111111111111111111111111", generatedToken)
+	token := MakeToken(requestPayload.Email)
+
+	http.SetCookie(w, &http.Cookie{
+		HttpOnly: true,
+		Expires:  time.Now().Add(7 * 24 * time.Hour),
+		SameSite: http.SameSiteLaxMode,
+		// Uncomment below for HTTPS:
+		// Secure: true,
+		Name:  "jwt", // Must be named "jwt" or else the token cannot be searched for by jwtauth.Verifier.
+		Value: token,
+	})
 
 	payload := jsonResponse{
 		Error:   false,
 		Message: fmt.Sprintf("Logged in user %s", user.Email),
-		Data:    generatedToken,
+		Data:    token,
 	}
 
 	app.writeJSON(w, http.StatusAccepted, payload)
 }
 
-func GenerateToken(UserID string) string {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"foo": "bar",
-		"nbf": time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
-	})
-
-	// Sign and get the complete encoded token as a string using the secret
-	var sampleSecretKey = []byte("UserID")
-
-	tokenString, err := token.SignedString(sampleSecretKey)
-
-	if err != nil {
-		panic(err)
-	}
+func MakeToken(email string) string {
+	_, tokenString, _ := tokenAuth.Encode(map[string]interface{}{"email": email})
 	return tokenString
 }
 
@@ -210,6 +210,24 @@ func (app *Config) CreateUser(w http.ResponseWriter, r *http.Request) {
 		Error:   false,
 		Message: fmt.Sprintf("Insert user success"),
 		Data:    schoolId,
+	}
+
+	app.writeJSON(w, http.StatusAccepted, payload)
+}
+
+func (app *Config) GetListUsers(w http.ResponseWriter, r *http.Request) {
+
+	// validate the user against the database
+	users, err := app.Models.User.GetAll()
+	if err != nil {
+		app.errorJSON(w, errors.New(fmt.Sprintf("Get list users error %s", err)), http.StatusBadRequest)
+		return
+	}
+
+	payload := jsonResponse{
+		Error:   false,
+		Message: fmt.Sprintf("Get list users success"),
+		Data:    users,
 	}
 
 	app.writeJSON(w, http.StatusAccepted, payload)
