@@ -14,7 +14,7 @@ import (
 )
 
 const webPort = "3000"
-const DNS = "host=localhost port=5432 user=postgres password=secret dbname=go_booking sslmode=disable timezone=UTC connect_timeout=5"
+const DNS = "host=localhost port=5455 user=postgres password=secret dbname=go_booking sslmode=disable timezone=UTC connect_timeout=5"
 
 var counts int64
 
