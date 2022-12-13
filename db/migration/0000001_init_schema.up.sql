@@ -41,3 +41,29 @@ COMMENT ON COLUMN "entries"."amount" IS 'can be negative or positive';
 
 COMMENT ON COLUMN "transfers"."amount" IS 'must be positive';
 
+CREATE TABLE "users" (
+  "username" varchar PRIMARY KEY,
+  "hashed_password" varchar NOT NULL,
+  "full_name" varchar NOT NULL,
+  "email" varchar UNIQUE NOT NULL,
+  "password_changed_at" timestamptz NOT NULL DEFAULT('0001-01-01 00:00:00Z'),  
+  "created_at" timestamptz NOT NULL DEFAULT (now())
+);
+
+ALTER TABLE "accounts" ADD FOREIGN KEY ("owner") REFERENCES "users" ("username");
+
+-- CREATE UNIQUE INDEX ON "accounts" ("owner", "currency");
+ALTER TABLE "accounts" ADD CONSTRAINT "owner_currency_key" UNIQUE ("owner", "currency");
+
+CREATE TABLE "sessions" (
+  "id" uuid PRIMARY KEY,
+  "username" varchar NOT NULL,
+  "refresh_token" varchar NOT NULL,
+  "user_agent" varchar NOT NULL,
+  "client_ip" varchar NOT NULL,
+  "is_blocked" boolean NOT NULL DEFAULT false,
+  "expires_at" timestamptz NOT NULL,
+  "created_at" timestamptz NOT NULL DEFAULT (now())
+);
+
+ALTER TABLE "sessions" ADD FOREIGN KEY ("username") REFERENCES "users" ("username");
