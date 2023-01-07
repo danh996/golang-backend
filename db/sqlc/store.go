@@ -27,7 +27,6 @@ func NewStore(db *sql.DB) Store {
 }
 
 func (s *SQLStore) execTx(ctx context.Context, fn func(*Queries) error) error {
-
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err

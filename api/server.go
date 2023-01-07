@@ -7,8 +7,6 @@ import (
 	"github.com/danh996/go-school/token"
 	"github.com/danh996/go-school/util"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/validator/v10"
 )
 
 type Server struct {
@@ -29,10 +27,6 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 		store:      store,
 		tokenMaker: tokenMaker,
 		config:     config,
-	}
-
-	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		v.RegisterValidation("currentcy", validCurrency)
 	}
 
 	server.setupRouter()
