@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/danh996/go-school/util"
+	"github.com/danh996/golang-backend/util"
 	"github.com/golang-jwt/jwt"
 	"github.com/stretchr/testify/require"
 )

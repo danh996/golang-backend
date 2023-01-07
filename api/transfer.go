@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
-	db "github.com/danh996/go-school/db/sqlc"
-	"github.com/danh996/go-school/token"
+	db "github.com/danh996/golang-backend/db/sqlc"
+	"github.com/danh996/golang-backend/token"
 	"github.com/gin-gonic/gin"
 )
 
@@ -29,7 +29,7 @@ func (s *Server) createTransfer(ctx *gin.Context) {
 	fromAccount, valid := s.validAccount(ctx, req.FromAccountID, req.Currency)
 	if !valid {
 		return
-	} 
+	}
 
 	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
 	if fromAccount.Owner != authPayload.Username {

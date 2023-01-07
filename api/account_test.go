@@ -9,9 +9,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	mockdb "github.com/danh996/go-school/db/mock"
-	db "github.com/danh996/go-school/db/sqlc"
-	"github.com/danh996/go-school/util"
+	mockdb "github.com/danh996/golang-backend/db/mock"
+	db "github.com/danh996/golang-backend/db/sqlc"
+	"github.com/danh996/golang-backend/util"
 	"github.com/goccy/go-json"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"

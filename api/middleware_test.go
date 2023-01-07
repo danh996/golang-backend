@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/danh996/go-school/token"
+	"github.com/danh996/golang-backend/token"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )

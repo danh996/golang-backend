@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/danh996/go-school/token"
+	"github.com/danh996/golang-backend/token"
 	"github.com/gin-gonic/gin"
 )
 
