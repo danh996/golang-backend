@@ -11,6 +11,9 @@ import (
 	"github.com/danh996/golang-backend/gapi"
 	"github.com/danh996/golang-backend/pb"
 	"github.com/danh996/golang-backend/util"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -26,7 +29,7 @@ func main() {
 	if err != nil {
 		log.Fatal("can not connect to DB", err)
 	}
-
+	runDBMigration(config.MigrationURL, config.DBSource)
 	store := db.NewStore(conn)
 	runGrpcServer(config, store)
 }
@@ -66,4 +69,17 @@ func runGinServer(config util.Config, store db.Store) {
 	}
 
 	fmt.Println("start server success")
+}
+
+func runDBMigration(migrationURL string, dbSource string) {
+	migration, err := migrate.New(migrationURL, dbSource)
+	if err != nil {
+		log.Fatal("cannot create new migrate instance")
+	}
+
+	if err = migration.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatal("failed to run migrate up")
+	}
+
+	log.Print("db migrated successfully")
 }

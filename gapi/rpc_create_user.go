@@ -5,6 +5,7 @@ import (
 
 	db "github.com/danh996/golang-backend/db/sqlc"
 	"github.com/danh996/golang-backend/pb"
+	"github.com/danh996/golang-backend/val"
 	"github.com/danh996/golang-backend/util"
 	"github.com/lib/pq"
 	"google.golang.org/grpc/codes"
@@ -12,6 +13,10 @@ import (
 )
 
 func (s *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
+	violations := validateCreateUserRequest(req)
+	if violations != nil {
+		return nil, invalidArgumentError(violations)
+	}
 	hashedPassword, err := util.HashPassword(req.GetPassword())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to hash password %s", err)
